@@ -6,6 +6,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6.svg)](tsconfig.json)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D20.18.1-5fa04e.svg)](https://nodejs.org)
 [![MCP](https://img.shields.io/badge/MCP-1.30-6b4fbb.svg)](https://modelcontextprotocol.io)
+[![MCP Registry](https://img.shields.io/badge/MCP%20Registry-listed-6b4fbb.svg)](https://registry.modelcontextprotocol.io/)
 
 A fast, dependency-light [Model Context Protocol](https://modelcontextprotocol.io) server that turns
 any web page into something a language model can actually read: clean Markdown, structured metadata,
@@ -119,7 +120,7 @@ Same shape, in `.kiro/settings/mcp.json` / the client's MCP config file:
 
 ### MCP Registry
 
-The server is published to the [official MCP Registry](https://modelcontextprotocol.io/registry)
+The server is listed in the [official MCP Registry](https://registry.modelcontextprotocol.io/)
 as `io.github.vojtisprime11/web-fetcher`, so clients that read the registry can discover it
 directly:
 
