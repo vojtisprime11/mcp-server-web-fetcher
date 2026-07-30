@@ -17,3 +17,4 @@ npm-debug.log*
 
 # Local, non-public notes (not part of the OSS package)
 CLAUDE_FOR_OSS_APPLICATION.md
+APPLICATION-ANSWERS.md
