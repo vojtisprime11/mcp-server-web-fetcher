@@ -28,6 +28,8 @@ jobs:
       - run: npm run format:check
       - run: npm run typecheck
 
+  # The test runner needs node:util's styleText, which landed in Node 20.
+  # Node 18 support of the published package is verified by the `compat` job.
   test:
     name: Test on Node ${{ matrix.node }} / ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -35,7 +37,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        node: [18, 20, 22, 24]
+        node: [20, 22, 24]
         include:
           - os: macos-latest
             node: 22
@@ -85,3 +87,23 @@ jobs:
         run: |
           npm pack --dry-run
           test -f dist/index.js
+
+  compat:
+    name: Built package runs on Node 18 (minimum supported)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      # The dev toolchain requires Node 20+, but the shipped artifact must keep
+      # working on the version declared in `engines`.
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 18
+      - run: node --version
+      - name: Complete an MCP handshake against the built server
+        run: node scripts/handshake.mjs

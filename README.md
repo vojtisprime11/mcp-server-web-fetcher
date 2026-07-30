@@ -416,6 +416,10 @@ console.log(page.markdown);
 
 ## Development
 
+The published package runs on Node 18.17+, but the dev toolchain (Vitest 4) needs Node 20 or newer.
+CI reflects that: tests run on Node 20/22/24, and a separate job completes an MCP handshake against
+the built server on Node 18 to prove the shipped artifact still works there.
+
 ```bash
 npm install
 npm run dev            # tsx watch
