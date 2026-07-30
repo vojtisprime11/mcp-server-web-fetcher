@@ -1,43 +1,19 @@
-# Dependencies
 node_modules/
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
-
-# Build output
 dist/
-build/
+coverage/
 *.tsbuildinfo
 
-# Environment variables
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
 
-# Logs
-logs/
+.DS_Store
 *.log
 npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-
-# Editor directories
-.vscode/
+.vitest/
 .idea/
-*.swp
-*.swo
-*~
+.vscode/*
+!.vscode/extensions.json
 
-# OS files
-.DS_Store
-Thumbs.db
-
-# Test coverage
-coverage/
-.nyc_output/
-
-# Temporary files
-tmp/
-temp/
-*.tmp
+# Local, non-public notes (not part of the OSS package)
+CLAUDE_FOR_OSS_APPLICATION.md

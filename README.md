@@ -1,53 +1,69 @@
-# MCP Server Web Fetcher
+# mcp-server-web-fetcher
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18-green.svg)](https://nodejs.org/)
-[![MCP](https://img.shields.io/badge/MCP-1.0-purple.svg)](https://modelcontextprotocol.io/)
+[![CI](https://github.com/vojtisprime11/mcp-server-web-fetcher/actions/workflows/ci.yml/badge.svg)](https://github.com/vojtisprime11/mcp-server-web-fetcher/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/mcp-server-web-fetcher.svg)](https://www.npmjs.com/package/mcp-server-web-fetcher)
+[![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6.svg)](tsconfig.json)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D18.17-5fa04e.svg)](https://nodejs.org)
+[![MCP](https://img.shields.io/badge/MCP-1.30-6b4fbb.svg)](https://modelcontextprotocol.io)
 
-A fast, lightweight **Model Context Protocol (MCP)** server that fetches any web page, strips HTML bloat, converts it into clean Markdown, and extracts structured metadata for LLM analysis.
+A fast, dependency-light [Model Context Protocol](https://modelcontextprotocol.io) server that turns
+any web page into something a language model can actually read: clean Markdown, structured metadata,
+and a classified list of links.
 
-Perfect for AI agents that need to understand web content without wrestling with raw HTML, ads, navigation menus, and tracking scripts.
+Web pages are 90% chrome. Scripts, cookie banners, navigation, sidebars and tracking pixels burn
+context and derail reasoning. This server strips all of that on the way in, so the model sees the
+article and nothing else.
 
-## ✨ Features
+```
+┌────────────┐   stdio/JSON-RPC   ┌──────────────────────┐   HTTPS   ┌──────────┐
+│ MCP client │ ─────────────────► │ mcp-server-web-      │ ────────► │ web page │
+│ (Claude,   │ ◄───────────────── │ fetcher              │ ◄──────── │          │
+│  Kiro, …)  │  Markdown + JSON   │ fetch → clean → md   │           └──────────┘
+└────────────┘                    └──────────────────────┘
+```
 
-- **🚀 Fast & Lightweight** – Minimal dependencies, optimized for speed
-- **📝 Clean Markdown Conversion** – Removes HTML noise, keeps only content
-- **🔍 Metadata Extraction** – Title, description, OG tags, Twitter Cards, headers
-- **🔗 Link Analysis** – Categorizes internal/external links with text and titles
-- **⏱️ Configurable Timeouts** – Prevent hanging on slow pages
-- **🛡️ Error Handling** – Graceful handling of HTTP errors, timeouts, and malformed HTML
-- **✅ Type-Safe** – Full TypeScript with Zod validation
-- **🧪 Well-Tested** – Comprehensive test coverage with Vitest
+## Features
 
-## 🚀 Quick Start
+- **Clean Markdown output.** Readability-style main-content detection, GFM tables, language-tagged
+  code fences, absolute links. No leftover HTML, even for gnarly nested tables.
+- **Context-window aware.** Long pages are paginated with `startIndex` / `nextStartIndex` instead of
+  being silently cut in half.
+- **Structured metadata.** Title, description, canonical, `lang`, author, publish/modify dates,
+  Open Graph, Twitter cards, JSON-LD, `hreflang` alternates, RSS/Atom feeds, h1–h6 outline and raw
+  HTTP headers.
+- **Link intelligence.** Absolute URLs, anchor text, `rel`, `nofollow`, internal vs external
+  classification, scope filters, de-duplication.
+- **SSRF hardening.** Loopback, private, link-local and cloud-metadata addresses are blocked on
+  _every_ redirect hop, not just the first request. Credentials in URLs are stripped.
+- **Predictable failures.** Every error carries a stable machine-readable `code`
+  (`TIMEOUT`, `HTTP_ERROR`, `BLOCKED_HOST`, `RESPONSE_TOO_LARGE`, …), a retryability flag and a
+  recovery hint, so the model can self-correct instead of guessing.
+- **Typed end to end.** Strict Zod input schemas plus published `outputSchema`, so clients get
+  validated `structuredContent`, not prose they have to re-parse.
+- **Well behaved.** Byte caps, timeouts, redirect limits, charset sniffing (including legacy
+  encodings), a small TTL cache, transient-failure retries and optional `robots.txt` enforcement.
+- **115 tests, no network required.** Vitest unit tests plus in-memory MCP protocol tests.
 
-### Installation
+## Quickstart
 
-#### Using NPM (recommended)
+Requires Node.js 18.17 or newer.
 
 ```bash
+# run it without installing
+npx -y mcp-server-web-fetcher
+
+# or install globally
 npm install -g mcp-server-web-fetcher
+mcp-server-web-fetcher
 ```
 
-#### From Source
+The server speaks MCP over stdio, so on its own it just waits for a client. Point a client at it:
 
-```bash
-git clone https://github.com/yourusername/mcp-server-web-fetcher.git
-cd mcp-server-web-fetcher
-npm install
-npm run build
-```
+### Claude Desktop
 
-### Configuration for Claude Desktop
-
-Add this to your `claude_desktop_config.json`:
-
-#### macOS
-Location: `~/Library/Application Support/Claude/claude_desktop_config.json`
-
-#### Windows
-Location: `%APPDATA%\Claude\claude_desktop_config.json`
+`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS,
+`%APPDATA%\Claude\claude_desktop_config.json` on Windows:
 
 ```json
 {
@@ -60,19 +76,56 @@ Location: `%APPDATA%\Claude\claude_desktop_config.json`
 }
 ```
 
-Or if installed globally:
+With configuration, using a global install:
 
 ```json
 {
   "mcpServers": {
     "web-fetcher": {
-      "command": "mcp-server-web-fetcher"
+      "command": "mcp-server-web-fetcher",
+      "env": {
+        "WEB_FETCHER_TIMEOUT_MS": "20000",
+        "WEB_FETCHER_RESPECT_ROBOTS": "true"
+      }
     }
   }
 }
 ```
 
-Or if running from source:
+Restart Claude Desktop, then ask it to summarise a URL.
+
+### Claude Code
+
+```bash
+claude mcp add web-fetcher -- npx -y mcp-server-web-fetcher
+```
+
+### Kiro, Cursor, Windsurf and other MCP clients
+
+Same shape, in `.kiro/settings/mcp.json` / the client's MCP config file:
+
+```json
+{
+  "mcpServers": {
+    "web-fetcher": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-web-fetcher"],
+      "disabled": false,
+      "autoApprove": ["fetch_page_markdown", "extract_metadata", "extract_links"]
+    }
+  }
+}
+```
+
+### From source
+
+```bash
+git clone https://github.com/vojtisprime11/mcp-server-web-fetcher.git
+cd mcp-server-web-fetcher
+npm install
+npm run build
+node dist/index.js          # or: npm run inspect
+```
 
 ```json
 {
@@ -85,287 +138,310 @@ Or if running from source:
 }
 ```
 
-After adding the configuration, restart Claude Desktop.
+## Tools
 
-## 🛠️ Available Tools
+All three tools are read-only, idempotent and open-world (annotated as such in the protocol), and
+all take an absolute `http(s)` URL.
 
-### 1. `fetch_page_markdown`
+### `fetch_page_markdown`
 
-Fetches a web page and converts it to clean, LLM-friendly Markdown.
+Downloads a page and returns clean, LLM-friendly Markdown.
 
-**Parameters:**
-- `url` (string, required) – The URL to fetch
-- `includeMetadata` (boolean, optional) – Include metadata in response (default: `false`)
-- `timeout` (number, optional) – Request timeout in milliseconds (default: `10000`, range: 1000-30000)
+| Parameter         | Type                | Default       | Description                                                    |
+| ----------------- | ------------------- | ------------- | -------------------------------------------------------------- |
+| `url`             | string              | required      | Absolute http(s) URL.                                          |
+| `maxLength`       | integer 500–1000000 | `25000`       | Markdown characters to return per call.                        |
+| `startIndex`      | integer ≥ 0         | `0`           | Character offset; use `nextStartIndex` from the previous call. |
+| `mainContentOnly` | boolean             | `true`        | Drop nav/header/footer/sidebar, keep the densest block.        |
+| `includeLinks`    | boolean             | `true`        | Keep Markdown links (`false` inlines the text only).           |
+| `includeImages`   | boolean             | `false`       | Keep images as `![alt](src)`.                                  |
+| `includeMetadata` | boolean             | `true`        | Attach a short metadata summary.                               |
+| `timeoutMs`       | integer 1000–120000 | env / `15000` | Per-request timeout.                                           |
 
-**Example:**
+Request:
 
 ```json
 {
-  "url": "https://example.com/article",
-  "includeMetadata": true,
-  "timeout": 5000
+  "name": "fetch_page_markdown",
+  "arguments": {
+    "url": "https://example.com/blog/caching",
+    "maxLength": 8000,
+    "mainContentOnly": true,
+    "includeImages": false
+  }
 }
 ```
 
-**Response:**
+`structuredContent`:
 
 ```json
 {
-  "markdown": "# Article Title\n\nThis is the clean content...",
-  "url": "https://example.com/article",
-  "success": true,
+  "url": "https://example.com/blog/caching",
+  "requestedUrl": "https://example.com/blog/caching",
+  "status": 200,
+  "contentType": "text/html; charset=utf-8",
+  "title": "How caching works",
+  "markdown": "# How caching works\n\nCaching is the art of **not** doing work twice...",
+  "markdownLength": 7984,
+  "totalLength": 21874,
+  "startIndex": 0,
+  "endIndex": 7984,
+  "nextStartIndex": 7984,
+  "truncated": true,
+  "wordCount": 1203,
+  "bytesDownloaded": 148213,
+  "elapsedMs": 412,
+  "fromCache": false,
+  "redirects": [],
   "metadata": {
-    "title": "Article Title",
-    "description": "Article description",
-    "ogTitle": "OG Title",
-    "headers": {
-      "h1": ["Article Title"],
-      "h2": ["Section 1", "Section 2"],
-      "h3": []
-    }
+    "title": "How caching works",
+    "description": "A deep dive into HTTP caching.",
+    "canonical": "https://example.com/blog/caching",
+    "language": "en",
+    "author": "Ada Lovelace",
+    "publishedTime": "2026-01-15T09:00:00Z"
   }
 }
 ```
 
-### 2. `extract_metadata`
+To read the rest, call again with `"startIndex": 7984`. Keep going while `nextStartIndex` is not
+`null`.
 
-Extracts structured metadata from a web page without converting content.
+### `extract_metadata`
 
-**Parameters:**
-- `url` (string, required) – The URL to analyze
-- `timeout` (number, optional) – Request timeout in milliseconds (default: `10000`)
+Everything a model needs to classify a page, without spending context on its body.
 
-**Example:**
+| Parameter            | Type                | Default       | Description                                                 |
+| -------------------- | ------------------- | ------------- | ----------------------------------------------------------- |
+| `url`                | string              | required      | Absolute http(s) URL.                                       |
+| `includeJsonLd`      | boolean             | `true`        | Include parsed JSON-LD blocks (malformed ones are skipped). |
+| `includeHeadings`    | boolean             | `true`        | Include the h1–h6 outline.                                  |
+| `includeHttpHeaders` | boolean             | `true`        | Include response headers, lower-cased.                      |
+| `timeoutMs`          | integer 1000–120000 | env / `15000` | Per-request timeout.                                        |
 
 ```json
 {
-  "url": "https://example.com/page"
+  "name": "extract_metadata",
+  "arguments": { "url": "https://example.com/blog/caching", "includeJsonLd": true }
 }
 ```
 
-**Response:**
+`structuredContent` (abridged):
 
 ```json
 {
-  "title": "Page Title",
-  "description": "Page description",
-  "keywords": "keyword1, keyword2",
-  "author": "Author Name",
-  "canonical": "https://example.com/page",
-  "ogTitle": "OG Title",
-  "ogDescription": "OG Description",
-  "ogImage": "https://example.com/image.jpg",
-  "ogUrl": "https://example.com/page",
-  "twitterCard": "summary_large_image",
-  "twitterTitle": "Twitter Title",
-  "twitterDescription": "Twitter Description",
-  "twitterImage": "https://example.com/twitter.jpg",
-  "headers": {
-    "h1": ["Main Heading"],
-    "h2": ["Subheading 1", "Subheading 2"],
-    "h3": ["Sub-subheading"]
-  }
+  "url": "https://example.com/blog/caching",
+  "status": 200,
+  "charset": "utf-8",
+  "title": "How caching works",
+  "description": "A deep dive into HTTP caching.",
+  "canonical": "https://example.com/blog/caching",
+  "language": "en",
+  "author": "Ada Lovelace",
+  "publishedTime": "2026-01-15T09:00:00Z",
+  "modifiedTime": null,
+  "robots": "index, follow",
+  "favicon": "https://example.com/favicon.ico",
+  "openGraph": {
+    "title": "How caching works",
+    "type": "article",
+    "image": "https://example.com/img/cover.png"
+  },
+  "twitter": { "card": "summary_large_image", "site": "@example" },
+  "alternates": [{ "hreflang": "de", "href": "https://example.com/de/blog/caching" }],
+  "feeds": [
+    { "title": "Feed", "href": "https://example.com/feed.xml", "type": "application/rss+xml" }
+  ],
+  "jsonLd": [{ "@type": "Article", "headline": "How caching works" }],
+  "headings": [
+    { "level": 1, "text": "How caching works", "id": null },
+    { "level": 2, "text": "Directives", "id": "directives" }
+  ],
+  "httpHeaders": { "content-type": "text/html; charset=utf-8", "x-cache": "HIT" },
+  "wordCount": 1203,
+  "redirects": [],
+  "fromCache": false
 }
 ```
 
-### 3. `extract_links`
+### `extract_links`
 
-Extracts all links from a web page, categorized as internal or external.
-
-**Parameters:**
-- `url` (string, required) – The URL to analyze
-- `includeExternal` (boolean, optional) – Include external links (default: `true`)
-- `includeInternal` (boolean, optional) – Include internal links (default: `true`)
-- `timeout` (number, optional) – Request timeout in milliseconds (default: `10000`)
-
-**Example:**
+| Parameter        | Type                              | Default       | Description                        |
+| ---------------- | --------------------------------- | ------------- | ---------------------------------- |
+| `url`            | string                            | required      | Absolute http(s) URL.              |
+| `scope`          | `all` \| `internal` \| `external` | `all`         | Same-site, off-site, or both.      |
+| `includeAnchors` | boolean                           | `false`       | Include in-page `#fragment` links. |
+| `deduplicate`    | boolean                           | `true`        | Collapse repeated URLs.            |
+| `limit`          | integer 1–2000                    | `200`         | Maximum links returned.            |
+| `timeoutMs`      | integer 1000–120000               | env / `15000` | Per-request timeout.               |
 
 ```json
 {
-  "url": "https://example.com",
-  "includeExternal": true,
-  "includeInternal": true
+  "name": "extract_links",
+  "arguments": { "url": "https://example.com/blog/caching", "scope": "external", "limit": 50 }
 }
 ```
 
-**Response:**
+`structuredContent`:
 
 ```json
 {
+  "url": "https://example.com/blog/caching",
+  "status": 200,
+  "totalFound": 2,
+  "returned": 2,
+  "internalCount": 0,
+  "externalCount": 2,
+  "truncated": false,
   "links": [
     {
-      "href": "https://example.com/about",
-      "text": "About Us",
-      "title": "Learn more about us",
-      "type": "internal"
-    },
-    {
-      "href": "https://external.com",
-      "text": "External Resource",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching",
+      "text": "MDN article",
       "title": null,
-      "type": "external"
+      "rel": "noopener nofollow",
+      "internal": false,
+      "nofollow": true
     }
   ],
-  "totalCount": 42,
-  "internalCount": 28,
-  "externalCount": 14,
-  "url": "https://example.com"
+  "fromCache": false
 }
 ```
 
-## 💡 Usage Examples
+`www.example.com` and `example.com` count as the same site; `blog.example.com` does not.
 
-### Fetch and Convert a Blog Post
+## Error handling
 
-```
-User: Fetch the content from https://blog.example.com/post and summarize it
-
-Claude: [Uses fetch_page_markdown tool]
-I've fetched the blog post. Here's a summary: ...
-```
-
-### Analyze Site Structure
+Failures come back as MCP tool errors (`isError: true`), never as silent empty results:
 
 ```
-User: What pages does https://example.com link to?
-
-Claude: [Uses extract_links tool]
-The homepage links to 28 internal pages and 14 external resources...
+HTTP_ERROR: 404 Client Error for https://example.com/missing
+Retryable: no
+Hint: Check the URL, or retry later if the status is 429/5xx.
 ```
 
-### Extract SEO Information
+`structuredContent.error` carries the same information as JSON: `{ code, message, retryable, url, status }`.
+
+| Code                       | Meaning                                                         |
+| -------------------------- | --------------------------------------------------------------- |
+| `INVALID_URL`              | Not an absolute URL.                                            |
+| `BLOCKED_SCHEME`           | Scheme other than `http`/`https`.                               |
+| `BLOCKED_HOST`             | Loopback, private, link-local or metadata address (SSRF guard). |
+| `DNS_FAILURE`              | Host does not resolve.                                          |
+| `TIMEOUT`                  | Request exceeded `timeoutMs`.                                   |
+| `HTTP_ERROR`               | Response status ≥ 400, or a redirect without `Location`.        |
+| `TOO_MANY_REDIRECTS`       | Redirect chain longer than the limit.                           |
+| `RESPONSE_TOO_LARGE`       | Declared body larger than the byte cap.                         |
+| `UNSUPPORTED_CONTENT_TYPE` | Not a text/HTML/XML/JSON document.                              |
+| `ROBOTS_DISALLOWED`        | Blocked by `robots.txt` (only when enforcement is on).          |
+| `NETWORK_ERROR`            | Connection reset, TLS failure, and similar.                     |
+| `PARSE_ERROR`              | Document could not be parsed.                                   |
+
+Timeouts, 5xx, 408 and 429 responses are retried once automatically before the error surfaces.
+
+## Configuration
+
+Everything is optional; the defaults are safe.
+
+| Variable                          | Default                                        | Description                                                |
+| --------------------------------- | ---------------------------------------------- | ---------------------------------------------------------- |
+| `WEB_FETCHER_USER_AGENT`          | `mcp-server-web-fetcher/<version> (+repo url)` | Outgoing `User-Agent`.                                     |
+| `WEB_FETCHER_TIMEOUT_MS`          | `15000`                                        | Default timeout (1000–120000).                             |
+| `WEB_FETCHER_MAX_BYTES`           | `5000000`                                      | Per-response byte cap (10000–50000000).                    |
+| `WEB_FETCHER_MAX_REDIRECTS`       | `5`                                            | Redirect hops allowed (0–20).                              |
+| `WEB_FETCHER_ALLOW_PRIVATE_HOSTS` | `false`                                        | Set to `true` only to fetch localhost/LAN URLs on purpose. |
+| `WEB_FETCHER_RESPECT_ROBOTS`      | `false`                                        | Enforce `robots.txt` (RFC 9309 subset) before fetching.    |
+| `WEB_FETCHER_CACHE_TTL_MS`        | `60000`                                        | Response cache TTL; `0` disables caching.                  |
+| `WEB_FETCHER_CACHE_MAX_ENTRIES`   | `50`                                           | Maximum cached responses.                                  |
+
+## Security
+
+- **SSRF guard on by default.** Hostnames are resolved and checked against loopback, RFC 1918,
+  CGNAT, link-local (including `169.254.169.254`), multicast and IPv4-mapped IPv6 ranges — for the
+  initial URL _and_ every redirect target. `localhost`, `*.localhost` and `*.internal` are refused
+  outright. Turning the guard off is an explicit opt-in.
+- **Byte and time caps.** Responses are streamed and cut at the byte cap; every request is aborted
+  at the timeout. Content-Length larger than the cap is rejected before download.
+- **No code execution.** JavaScript is never run; `<script>`, `<style>`, `<iframe>` and friends are
+  removed before conversion. Fetched content is data, not instructions — treat page text reaching a
+  model as untrusted input.
+- **Credentials stripped.** `user:pass@` is removed from URLs before the request is made.
+- **Read-only.** The server has no write, filesystem or shell surface, and no authentication state.
+
+Found a vulnerability? See [SECURITY.md](SECURITY.md).
+
+## Architecture
 
 ```
-User: What are the meta tags on https://example.com?
-
-Claude: [Uses extract_metadata tool]
-Here's the SEO metadata:
-- Title: "Example Domain"
-- Description: "..."
-- OG Image: "https://example.com/og-image.jpg"
+src/
+├── index.ts              # stdio entry point (logs to stderr only)
+├── server.ts             # transport-agnostic server factory + public API
+├── types.ts              # Zod input/output schemas for every tool
+├── tools/
+│   ├── fetchPageMarkdown.ts
+│   ├── extractMetadata.ts
+│   ├── extractLinks.ts
+│   ├── shared.ts         # result shaping, dependency injection
+│   └── index.ts
+└── lib/
+    ├── config.ts         # env-driven configuration
+    ├── errors.ts         # typed error codes + recovery hints
+    ├── net.ts            # URL parsing, SSRF guard, link resolution
+    ├── http.ts           # fetch pipeline: timeouts, caps, redirects, charset, cache
+    ├── robots.ts         # optional robots.txt support
+    ├── html.ts           # cheerio cleanup, metadata + link extraction
+    ├── markdown.ts       # turndown configuration, tables, pagination
+    └── cache.ts          # TTL + LRU cache
+tests/                    # unit tests + in-memory MCP protocol tests
 ```
 
-## 🏗️ Architecture
+Tool handlers take an injectable `fetchImpl`, so every test runs offline against a scripted HTTP
+stub. The library is also importable directly:
 
-```
-mcp-server-web-fetcher/
-├── src/
-│   ├── index.ts              # MCP server entry point
-│   ├── types.ts              # TypeScript types & Zod schemas
-│   ├── tools/
-│   │   ├── fetch-page-markdown.ts
-│   │   ├── extract-metadata.ts
-│   │   └── extract-links.ts
-│   └── utils/
-│       ├── http-client.ts    # HTTP fetching with timeout
-│       └── html-processor.ts # HTML parsing & conversion
-├── tests/
-│   ├── html-processor.test.ts
-│   └── tools.test.ts
-├── package.json
-├── tsconfig.json
-└── README.md
+```ts
+import { runFetchPageMarkdown } from 'mcp-server-web-fetcher';
+
+const page = await runFetchPageMarkdown({ url: 'https://example.com' });
+console.log(page.markdown);
 ```
 
-## 🧪 Development
-
-### Setup
+## Development
 
 ```bash
-git clone https://github.com/yourusername/mcp-server-web-fetcher.git
-cd mcp-server-web-fetcher
 npm install
-```
-
-### Build
-
-```bash
-npm run build
-```
-
-### Run Tests
-
-```bash
-npm test
-```
-
-### Watch Mode (Development)
-
-```bash
-npm run dev
-```
-
-### Lint & Format
-
-```bash
+npm run dev            # tsx watch
+npm run typecheck
 npm run lint
-npm run format
-```
-
-## 🔧 Testing with MCP Inspector
-
-Use the official [MCP Inspector](https://github.com/modelcontextprotocol/inspector) to test your server:
-
-```bash
-npx @modelcontextprotocol/inspector node dist/index.js
-```
-
-## 📦 Publishing
-
-```bash
+npm test               # vitest run
+npm run test:coverage  # thresholds enforced
 npm run build
-npm test
-npm publish
+npm run inspect        # MCP Inspector against dist/index.js
+node scripts/smoke.mjs https://example.com   # live end-to-end check
 ```
 
-## 🤝 Contributing
+Contributions welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) and
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
-Contributions are welcome! Please follow these steps:
+## Limitations
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+- Static HTML only. Client-rendered SPAs return whatever the server sends; no headless browser.
+- No PDF or Office document extraction.
+- Sites behind bot protection (Cloudflare challenges, login walls) will return 403.
+- Main-content detection is a text-density heuristic. Use `mainContentOnly: false` when a page has
+  an unusual structure.
 
-Please ensure:
-- All tests pass (`npm test`)
-- Code follows the existing style
-- New features include tests
-- Documentation is updated
+## Roadmap
 
-## 📝 License
+- `search_page` tool: return only the sections matching a query.
+- Optional headless rendering behind a flag, for JS-only pages.
+- Streamable HTTP transport in addition to stdio.
+- Conditional requests (`ETag` / `If-Modified-Since`) in the cache layer.
 
-MIT License - see [LICENSE](LICENSE) file for details.
+## Acknowledgements
 
-## 🙏 Acknowledgments
+Built on the [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk),
+[cheerio](https://cheerio.js.org/), [turndown](https://github.com/mixmark-io/turndown) and
+[zod](https://zod.dev/).
 
-- Built with [Model Context Protocol SDK](https://github.com/modelcontextprotocol/sdk)
-- HTML parsing by [Cheerio](https://cheerio.js.org/)
-- Markdown conversion by [Turndown](https://github.com/mixmark-io/turndown)
-- Validation by [Zod](https://zod.dev/)
+## License
 
-## 🐛 Known Limitations
-
-- JavaScript-rendered content (SPA) is not supported – only static HTML is fetched
-- Some sites may block automated requests (use responsibly)
-- Very large pages (>10MB) may be slow to process
-
-## 🔮 Future Enhancements
-
-- [ ] Support for JavaScript-rendered content (Playwright/Puppeteer)
-- [ ] Rate limiting and caching
-- [ ] Support for authentication/cookies
-- [ ] PDF and document extraction
-- [ ] Custom CSS selectors for content extraction
-- [ ] Batch URL processing
-
-## 📞 Support
-
-- **Issues**: [GitHub Issues](https://github.com/yourusername/mcp-server-web-fetcher/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/mcp-server-web-fetcher/discussions)
-
----
-
-Made with ❤️ for the MCP community
+[MIT](LICENSE) © Vojta Holes and contributors

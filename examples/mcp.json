@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "web-fetcher": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-web-fetcher"],
+      "disabled": false,
+      "autoApprove": ["fetch_page_markdown", "extract_metadata", "extract_links"]
+    }
+  }
+}

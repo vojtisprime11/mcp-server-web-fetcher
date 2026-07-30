@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "web-fetcher": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-web-fetcher"],
+      "env": {
+        "WEB_FETCHER_TIMEOUT_MS": "20000",
+        "WEB_FETCHER_MAX_BYTES": "5000000",
+        "WEB_FETCHER_RESPECT_ROBOTS": "false"
+      }
+    }
+  }
+}

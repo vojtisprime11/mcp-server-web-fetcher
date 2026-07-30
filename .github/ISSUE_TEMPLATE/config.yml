@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or idea
+    url: https://github.com/vojtisprime11/mcp-server-web-fetcher/discussions
+    about: Ask about usage, share what you built, or float an idea before opening an issue.
+  - name: Security vulnerability
+    url: https://github.com/vojtisprime11/mcp-server-web-fetcher/security/advisories/new
+    about: Report privately. Please do not open a public issue.
+  - name: Model Context Protocol docs
+    url: https://modelcontextprotocol.io
+    about: Questions about MCP itself, clients and transports.

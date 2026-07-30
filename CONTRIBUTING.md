@@ -1,120 +1,66 @@
-# Contributing to MCP Server Web Fetcher
+# Contributing
 
-Thank you for considering contributing to MCP Server Web Fetcher! This document provides guidelines and instructions for contributing.
+Thanks for considering a contribution. Issues, bug reports and pull requests are all welcome, and
+small PRs are easier to review than big ones.
 
-## 🤝 How to Contribute
+## Getting set up
 
-### Reporting Bugs
+Requires Node.js 18.17 or newer.
 
-If you find a bug, please create an issue with:
-- Clear description of the problem
-- Steps to reproduce
-- Expected vs actual behavior
-- Your environment (Node.js version, OS, etc.)
-- Any relevant error messages or logs
-
-### Suggesting Features
-
-Feature suggestions are welcome! Please create an issue with:
-- Clear description of the feature
-- Use case and motivation
-- Examples of how it would work
-- Any implementation ideas you have
-
-### Pull Requests
-
-1. **Fork and Clone**
-   ```bash
-   git clone https://github.com/yourusername/mcp-server-web-fetcher.git
-   cd mcp-server-web-fetcher
-   ```
-
-2. **Create a Branch**
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
-
-3. **Install Dependencies**
-   ```bash
-   npm install
-   ```
-
-4. **Make Your Changes**
-   - Write clean, readable code
-   - Follow the existing code style
-   - Add tests for new functionality
-   - Update documentation as needed
-
-5. **Run Tests**
-   ```bash
-   npm test
-   npm run build
-   npm run lint
-   ```
-
-6. **Commit Your Changes**
-   ```bash
-   git add .
-   git commit -m "feat: add amazing feature"
-   ```
-
-   We follow [Conventional Commits](https://www.conventionalcommits.org/):
-   - `feat:` - New feature
-   - `fix:` - Bug fix
-   - `docs:` - Documentation changes
-   - `test:` - Test additions or changes
-   - `refactor:` - Code refactoring
-   - `chore:` - Maintenance tasks
-
-7. **Push and Create PR**
-   ```bash
-   git push origin feature/your-feature-name
-   ```
-   Then create a Pull Request on GitHub.
-
-## 📝 Code Style
-
-- Use TypeScript strict mode
-- Follow ESLint and Prettier configurations
-- Write meaningful variable and function names
-- Add JSDoc comments for public APIs
-- Keep functions small and focused
-
-## 🧪 Testing
-
-- Write unit tests for all new features
-- Aim for high test coverage
-- Test both success and error cases
-- Use descriptive test names
-
-Example:
-```typescript
-describe("fetchPageMarkdown", () => {
-  it("converts HTML to Markdown successfully", async () => {
-    // Test implementation
-  });
-
-  it("handles HTTP errors gracefully", async () => {
-    // Test implementation
-  });
-});
+```bash
+git clone https://github.com/vojtisprime11/mcp-server-web-fetcher.git
+cd mcp-server-web-fetcher
+npm install
+npm test
 ```
 
-## 📚 Documentation
+Useful scripts:
 
-- Update README.md for user-facing changes
-- Add JSDoc comments for code documentation
-- Include examples for new features
-- Update CHANGELOG.md (if exists)
+| Command                           | What it does                                       |
+| --------------------------------- | -------------------------------------------------- |
+| `npm run dev`                     | Runs the server from source with `tsx watch`.      |
+| `npm run build`                   | Compiles to `dist/` (NodeNext ESM).                |
+| `npm test`                        | Runs the Vitest suite once.                        |
+| `npm run test:watch`              | Watch mode.                                        |
+| `npm run test:coverage`           | Coverage with enforced thresholds.                 |
+| `npm run typecheck`               | `tsc --noEmit` over `src` and `tests`.             |
+| `npm run lint` / `lint:fix`       | ESLint.                                            |
+| `npm run format` / `format:check` | Prettier.                                          |
+| `npm run inspect`                 | MCP Inspector against `dist/index.js`.             |
+| `node scripts/smoke.mjs <url>`    | Live end-to-end check through a real stdio client. |
 
-## ✅ Review Process
+## Before opening a pull request
 
-1. All tests must pass
-2. Code must follow style guidelines
-3. Documentation must be updated
-4. At least one maintainer approval required
-5. No merge conflicts
+```bash
+npm run lint && npm run typecheck && npm test && npm run build
+```
 
-## 🙏 Thank You
+CI runs the same checks on Node 18, 20, 22 and 24, so a green local run usually means a green PR.
 
-Your contributions make this project better for everyone!
+## Conventions
+
+- **TypeScript strict mode**, no `any`, no non-null assertions in new code.
+- **Tests stay offline.** Never call the real network from a test; inject a `fetchImpl` stub
+  (see `tests/helpers.ts`). `scripts/smoke.mjs` is the only place that touches the internet.
+- **New tool or parameter?** Add its Zod schema to `src/types.ts`, keep input schemas `.strict()`,
+  document the parameter in the README table, and cover it with a test.
+- **Errors** go through `WebFetcherError` with an existing code where possible. New codes need a
+  `recoveryHint` entry.
+- **Comments explain why, not what.** Skip comments that restate the code.
+- **Conventional Commits** for commit messages and PR titles:
+  `feat:`, `fix:`, `docs:`, `test:`, `refactor:`, `perf:`, `chore:`.
+- Update `CHANGELOG.md` under `## [Unreleased]` for user-visible changes.
+
+## Reporting bugs
+
+Please include the URL that misbehaved (if it is public), the tool and arguments used, the error
+`code` you got back, plus your Node.js and OS versions. A failing test case is the fastest possible
+bug report.
+
+## Security issues
+
+Do not open a public issue. Follow [SECURITY.md](SECURITY.md).
+
+## Code of conduct
+
+Participation is governed by [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
