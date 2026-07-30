@@ -5,7 +5,7 @@ small PRs are easier to review than big ones.
 
 ## Getting set up
 
-Requires Node.js 18.17 or newer.
+Requires Node.js 20.18.1 or newer.
 
 ```bash
 git clone https://github.com/vojtisprime11/mcp-server-web-fetcher.git
@@ -35,7 +35,7 @@ Useful scripts:
 npm run lint && npm run typecheck && npm test && npm run build
 ```
 
-CI runs the same checks on Node 18, 20, 22 and 24, so a green local run usually means a green PR.
+CI runs the same checks on Node 20, 22 and 24, so a green local run usually means a green PR.
 
 ## Conventions
 

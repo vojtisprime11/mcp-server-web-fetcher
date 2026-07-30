@@ -4,7 +4,7 @@
 [![npm version](https://img.shields.io/npm/v/mcp-server-web-fetcher.svg)](https://www.npmjs.com/package/mcp-server-web-fetcher)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6.svg)](tsconfig.json)
-[![Node.js](https://img.shields.io/badge/node-%3E%3D18.17-5fa04e.svg)](https://nodejs.org)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D20.18.1-5fa04e.svg)](https://nodejs.org)
 [![MCP](https://img.shields.io/badge/MCP-1.30-6b4fbb.svg)](https://modelcontextprotocol.io)
 
 A fast, dependency-light [Model Context Protocol](https://modelcontextprotocol.io) server that turns
@@ -47,7 +47,7 @@ article and nothing else.
 
 ## Quickstart
 
-Requires Node.js 18.17 or newer.
+Requires Node.js 20.18.1 or newer (inherited from cheerio, which needs undici 7).
 
 ```bash
 # run it without installing
@@ -416,9 +416,10 @@ console.log(page.markdown);
 
 ## Development
 
-The published package runs on Node 18.17+, but the dev toolchain (Vitest 4) needs Node 20 or newer.
-CI reflects that: tests run on Node 20/22/24, and a separate job completes an MCP handshake against
-the built server on Node 18 to prove the shipped artifact still works there.
+The minimum supported Node.js version is 20.18.1, which comes from cheerio (it depends on undici 7,
+and undici 7 needs the `File` global that landed in Node 20). CI runs the suite on Node 20/22/24 and
+has a separate job that completes an MCP handshake against the built server on exactly 20.18.1, so
+the declared floor is verified rather than assumed.
 
 ```bash
 npm install

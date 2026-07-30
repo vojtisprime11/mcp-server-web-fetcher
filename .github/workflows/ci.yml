@@ -28,8 +28,8 @@ jobs:
       - run: npm run format:check
       - run: npm run typecheck
 
-  # The test runner needs node:util's styleText, which landed in Node 20.
-  # Node 18 support of the published package is verified by the `compat` job.
+  # The floor is Node 20.18.1, inherited from cheerio -> undici 7. The `compat`
+  # job verifies the built package on exactly that version.
   test:
     name: Test on Node ${{ matrix.node }} / ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -89,7 +89,7 @@ jobs:
           test -f dist/index.js
 
   compat:
-    name: Built package runs on Node 18 (minimum supported)
+    name: Built package runs on Node 20.18.1 (minimum supported)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -99,11 +99,11 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
-      # The dev toolchain requires Node 20+, but the shipped artifact must keep
-      # working on the version declared in `engines`.
+      # Prove the shipped artifact runs on the exact version declared in
+      # `engines`, not just on whatever the test matrix happens to use.
       - uses: actions/setup-node@v6
         with:
-          node-version: 18
+          node-version: 20.18.1
       - run: node --version
       - name: Complete an MCP handshake against the built server
         run: node scripts/handshake.mjs
