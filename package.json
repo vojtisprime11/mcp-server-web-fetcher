@@ -2,6 +2,7 @@
   "name": "mcp-server-web-fetcher",
   "version": "0.1.0",
   "description": "Fast, lightweight MCP server that fetches any web page, strips HTML bloat, converts it to clean Markdown, and extracts metadata and links for LLM analysis.",
+  "mcpName": "io.github.vojtisprime11/web-fetcher",
   "license": "MIT",
   "type": "module",
   "engines": {

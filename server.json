@@ -1,0 +1,57 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.vojtisprime11/web-fetcher",
+  "description": "Fetches any web page and returns clean Markdown, structured metadata (Open Graph, JSON-LD, canonical, outline) and classified internal/external links for LLM analysis.",
+  "repository": {
+    "url": "https://github.com/vojtisprime11/mcp-server-web-fetcher",
+    "source": "github"
+  },
+  "version": "0.1.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "mcp-server-web-fetcher",
+      "version": "0.1.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "WEB_FETCHER_TIMEOUT_MS",
+          "description": "Request timeout in milliseconds (1000-120000). Defaults to 15000.",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "number"
+        },
+        {
+          "name": "WEB_FETCHER_MAX_BYTES",
+          "description": "Maximum bytes downloaded per response. Defaults to 5000000.",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "number"
+        },
+        {
+          "name": "WEB_FETCHER_USER_AGENT",
+          "description": "User-Agent header sent with every request.",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "string"
+        },
+        {
+          "name": "WEB_FETCHER_ALLOW_PRIVATE_HOSTS",
+          "description": "Set to true to allow fetching loopback and private network addresses. Disables the SSRF guard.",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "boolean"
+        },
+        {
+          "name": "WEB_FETCHER_RESPECT_ROBOTS",
+          "description": "Set to true to enforce robots.txt before fetching.",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "boolean"
+        }
+      ]
+    }
+  ]
+}

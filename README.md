@@ -117,6 +117,16 @@ Same shape, in `.kiro/settings/mcp.json` / the client's MCP config file:
 }
 ```
 
+### MCP Registry
+
+The server is published to the [official MCP Registry](https://modelcontextprotocol.io/registry)
+as `io.github.vojtisprime11/web-fetcher`, so clients that read the registry can discover it
+directly:
+
+```bash
+curl "https://registry.modelcontextprotocol.io/v0.1/servers?search=io.github.vojtisprime11/web-fetcher"
+```
+
 ### From source
 
 ```bash
