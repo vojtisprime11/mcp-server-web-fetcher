@@ -36,9 +36,10 @@ First public release.
 - Environment-based configuration for user agent, timeout, byte cap, redirect limit, private-host
   policy, robots enforcement and cache behaviour.
 - Test suite: 115 Vitest tests including in-memory MCP protocol tests, all running offline.
-- GitHub Actions CI (lint, typecheck, test matrix on Node 20/22/24, a Node 20.18.1 floor check, build,
-  package check) and a
-  provenance-enabled release workflow.
+- GitHub Actions CI (lint, typecheck, test matrix on Node 20/22/24, a Node 20.18.1 floor check,
+  build, package check) and a release workflow.
+- Published to npm as `mcp-server-web-fetcher` and to the official MCP Registry as
+  `io.github.vojtisprime11/web-fetcher`.
 
 [Unreleased]: https://github.com/vojtisprime11/mcp-server-web-fetcher/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/vojtisprime11/mcp-server-web-fetcher/releases/tag/v0.1.0

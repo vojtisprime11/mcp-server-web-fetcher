@@ -28,7 +28,19 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      # npm requires a 2FA challenge to publish, so releases are currently cut
+      # manually. This step stays a no-op until either an automation token is
+      # configured as NPM_TOKEN, or the package is switched to npm trusted
+      # publishing (OIDC), which is the better long-term option:
+      # https://docs.npmjs.com/trusted-publishers
       - name: Publish with provenance
-        run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "${NODE_AUTH_TOKEN}" ]; then
+            echo "NPM_TOKEN is not configured — skipping publish."
+            echo "The tarball above was built and tested; publish it manually with:"
+            echo "  npm publish --access public"
+            exit 0
+          fi
+          npm publish --provenance --access public
