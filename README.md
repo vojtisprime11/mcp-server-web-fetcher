@@ -128,6 +128,26 @@ directly:
 curl "https://registry.modelcontextprotocol.io/v0.1/servers?search=io.github.vojtisprime11/web-fetcher"
 ```
 
+### Docker
+
+```bash
+docker build -t mcp-server-web-fetcher .
+```
+
+```json
+{
+  "mcpServers": {
+    "web-fetcher": {
+      "command": "docker",
+      "args": ["run", "--rm", "-i", "mcp-server-web-fetcher"]
+    }
+  }
+}
+```
+
+The image runs as the unprivileged `node` user and carries production dependencies only. CI builds
+it and drives it with a real MCP client, so it is verified to start and answer introspection.
+
 ### From source
 
 ```bash

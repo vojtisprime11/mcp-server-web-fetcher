@@ -12,9 +12,13 @@ import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 
 const EXPECTED = ['fetch_page_markdown', 'extract_metadata', 'extract_links'];
 
+// Defaults to the built entry point; pass a command to check another packaging,
+// e.g. `node scripts/handshake.mjs docker run --rm -i mcp-server-web-fetcher`.
+const [command = process.execPath, ...args] = process.argv.slice(2);
+
 const transport = new StdioClientTransport({
-  command: process.execPath,
-  args: ['dist/index.js'],
+  command,
+  args: args.length > 0 ? args : command === process.execPath ? ['dist/index.js'] : [],
   stderr: 'inherit',
 });
 const client = new Client({ name: 'handshake', version: '1.0.0' });

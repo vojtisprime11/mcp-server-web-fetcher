@@ -1,0 +1,15 @@
+node_modules
+dist
+coverage
+.git
+.github
+tests
+scripts
+examples
+*.md
+!README.md
+.env
+.env.*
+.DS_Store
+*.log
+*.tsbuildinfo

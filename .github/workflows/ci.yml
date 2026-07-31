@@ -88,6 +88,23 @@ jobs:
           npm pack --dry-run
           test -f dist/index.js
 
+  docker:
+    name: Container image builds and speaks MCP
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build the image
+        run: docker build -t mcp-server-web-fetcher:ci .
+      # Drives the container over stdio with a real MCP client, so the image is
+      # verified to start and answer introspection, not merely to build.
+      - name: Complete an MCP handshake against the container
+        run: node scripts/handshake.mjs docker run --rm -i mcp-server-web-fetcher:ci
+
   compat:
     name: Built package runs on Node 20.18.1 (minimum supported)
     runs-on: ubuntu-latest
