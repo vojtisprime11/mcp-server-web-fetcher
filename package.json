@@ -66,7 +66,7 @@
   },
   "homepage": "https://github.com/vojtisprime11/mcp-server-web-fetcher#readme",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "1.30.0",
+    "@modelcontextprotocol/sdk": "1.32.1",
     "cheerio": "1.2.0",
     "turndown": "7.2.4",
     "turndown-plugin-gfm": "1.0.2",
